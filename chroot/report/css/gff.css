@@ -1,0 +1,568 @@
+/*
+//
+// GetFoundFirst.com Reporting Engine
+// Copyright 2013 ndisp.com and getfoundfirst.com
+//
+// This application is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public
+// License as published by the Free Software Foundation; either
+// version 3 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public
+// License along with this code; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+//
+
+Main Grey: #404040
+Main Teal: #00a9b9
+*/
+
+/* http://meyerweb.com/eric/tools/css/reset/ 
+   v2.0 | 20110126
+   License: none (public domain)
+----------------------------------------------------
+*/
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: 100%;
+	font: inherit;
+	vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+	display: block;
+}
+body {
+	line-height: 1;
+}
+ol, ul {
+	list-style: none;
+}
+blockquote, q {
+	quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+	content: '';
+	content: none;
+}
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+
+/*--------------------Basic CSS-------------------------*/
+
+html {
+  -webkit-print-color-adjust:exact;
+}
+
+body {
+  font-family: "Arial", Helvetica, sans-serif;
+}
+
+h2 {
+  font-size: 36pt;
+  text-align: center;
+  font-family: "Verdana", Geneva, sans-serif;
+  color: #888;
+  margin-top: 40px;
+  margin-bottom: 40px;
+}
+
+h3 {
+  font-size: 20pt;
+  font-family: "Verdana", Geneva, sans-serif;
+  color: #444;
+  margin-left: 40px;
+  margin-bottom: 20px;
+}
+
+ul {
+  font-size: 16px;
+  margin-left: 110px;
+  margin-bottom: 30px;
+  list-style: square;
+}
+
+li {
+  line-height: 25px;
+}
+
+ul ul {
+  margin-left: 20px;
+  list-style: none;
+}
+
+ul ul li {
+  line-height: 30px;
+}
+
+.sildeNumDiv{
+  position: fixed;
+  right: 25px;
+  bottom: 25px;
+}
+
+#prev {
+  position: fixed;
+  right: 50px;
+  bottom: 50px;
+  cursor: pointer
+}
+
+#prev:hover {
+  color: blue;
+}
+
+#next {
+  position: fixed;
+  right: 50px;
+  bottom: 100px;
+  cursor: pointer
+}
+
+#next:hover {
+  color: blue;
+}
+
+.overlay {
+  width: 1102px;
+  height: 827px;
+  margin: 0 auto;
+  overflow: hidden;
+  position: relative;
+  z-index: 999;
+}
+
+.content {
+  width: 1100px;
+  height: 825px;
+  margin: 0 auto;
+  border-top: 1px #404040 solid;
+  border-right: 1px #404040 solid;
+  border-left: 1px #404040 solid;
+  page-break-after:always;
+  overflow: auto;
+  position: relative;
+  background: #fff;
+}
+
+header {
+  height: 100px;
+  width: 100%;
+  background: #404040;
+  border-bottom: 5px #00a9b9 solid;
+}
+
+.logo {
+  margin-top: 65px;
+  margin-left: 100px;
+}
+
+.title {
+  color: #888;
+  font-size: 44pt;
+  font-family: "Verdana", Geneva, sans-serif;
+  text-align: center;
+  margin-top: 75px;
+}
+
+.dates {
+  display: block;
+  text-align: center;
+  font-size: 40px;
+  margin-top: 30px;
+  margin-bottom: 100px;
+  color: #aaa;
+}
+
+footer {
+  height: 272px;
+  width: 100%;
+  position: relative;
+  bottom: 0;
+  background: #404040;
+  border-top: 5px #00a9b9 solid;
+}
+
+.gffLogo {
+  float: right;
+  margin-top: 60px;
+  margin-right: 60px;
+}
+
+.left {
+  width: 6%;
+  height: 100%;
+  float: left;
+  background: #404040;
+  border-right: 5px #00a9b9 solid;
+}
+
+.right {
+  width: 93.54%;
+  height: 725px;
+  float: left;
+}
+
+.rightBottom {
+  width: 93.54%;
+  height: 95px;
+}
+
+.contentsList {
+  
+}
+
+.contentsList li {
+  list-style: none;
+  color: #404040;
+  font-size: 22px;
+}
+
+.footerGffLogo {
+  float: right;
+  margin-right: 20px;
+}
+
+/*---------------------------Graph CSS------------------------------------*/
+
+.graph {
+  margin-left: 25px;
+}
+
+.verticalTitle {
+  transform: rotate(270deg);
+  -ms-transform: rotate(270deg);
+  -webkit-transform: rotate(270deg);
+  -moz-transform: rotate(270deg);
+  float: left;
+  position: relative;
+  top: 90px;
+  width: 40px;
+}
+
+.horizontalTitle {
+  margin-top: 10px;
+  margin-left: 428px;
+}
+
+.graph1 {
+  position: relative;
+  top: 0;
+  right: 0;
+}
+.graph1 table {
+  height: 151px;
+}
+
+.graph1 tr {
+  height: 20%;
+}
+
+.graph1 tr td:first-of-type {
+  text-align: right;
+  padding-right: 10px;
+  width: 50px;
+}
+
+.graph1 tr td:last-of-type {
+  border-top: 1px #404040 solid;
+  border-left: 1px #404040 solid;
+  border-right: 1px #404040 solid;
+  width: 850px;
+}
+
+.graph1 table td:last-of-type {
+  border-bottom: 1px #404040 solid;
+}
+
+.graph2 td:first-of-type {
+  width: 103px;
+}
+
+.graph2 table {
+  margin-top: 7px;
+}
+
+.graph2 td {
+  width: 93px;
+  text-align: center;
+}
+
+.graphBars {
+  height: 120px;
+  width: 850px;
+  position: absolute;
+  /*z-index: 2;*/
+  top: 30px;
+  left: 103px;
+}
+
+.bar {
+  float: left;
+  width: 8%;
+  margin-left: 2.5%;
+  border: 1px solid #404040;
+  background: #00a9b9;
+  position: relative;
+  box-shadow: 2px 2px 5px #404040;
+}
+
+.barLabels {
+  color: #fff;
+  margin-left: 30%;
+  position: relative;
+  top: 2px;
+  font-size: 10px;
+}
+
+/*---------------------Horizontal Bar graph CSS---------------------------*/
+
+.horizontalGraph {
+  margin-left: 25px;
+}
+
+.horizontalChartLabel {
+  height: 30px;
+  width: 200px;
+  color: #333;
+  word-wrap: normal;
+  vertical-align: middle;
+  padding-bottom: 2px;
+  font-size: 14px;
+}
+
+.barHolder {
+  height: 30px;
+  width: 700px;
+  padding-bottom: 2px;
+}
+
+.horizontalBar {
+  height: 28px;
+  background: #00a9b9;
+  border-bottom: 2px solid #fff;
+}
+
+.horizontalBar span {
+  color: red;
+  position: relative;
+  right: -64px;
+  float: right;
+  margin-top: 5px;
+}
+
+/*---------------------------Table CSS------------------------------------*/
+
+/*------------------------StatsTable CSS----------------------------------*/
+
+.statsTable {
+  margin-left: 25px;
+  margin-right: 25px;
+}
+
+.longtable th:only-of-type,.statsTable th:only-of-type ,.horizontalGraph th:only-of-type {
+  background: #fff;
+  color: #404040;
+  height: 40px;
+  vertical-align: bottom;
+  padding-bottom: 5px;
+  text-align: left;
+}
+
+.statsTable th {
+  background: #404040;
+  color: #fff;
+  height: 40px;
+  word-wrap: normal;
+  vertical-align: bottom;
+  padding-bottom: 5px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.statsTable td {
+  background: #ccc;
+  color: #404040;
+  height: 50px;
+  vertical-align: middle;
+  text-align: center;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.statsTable td:first-of-type {
+  background: #00a9b9;
+  color: #fff;
+}
+
+/*-------------------------longTable CSS----------------------------------*/
+
+.longtable {
+  margin-left: 25px;
+}
+
+.longtable td {
+  vertical-align: middle;
+}
+  
+.longTable th {
+  background: #404040;
+  color: #fff;
+  height: 40px;
+  vertical-align: bottom;
+  padding-bottom: 5px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.longTable th:first-of-type {
+  background: #00a9b9;
+  color: #fff;
+  height: 40px;
+  vertical-align: bottom;
+  padding-bottom: 5px;
+}
+
+.longTable tr {
+  background: #ccc;
+  color: #333;
+  height: 22px;
+  word-wrap: normal;
+  vertical-align: bottom;
+  padding-bottom: 5px;
+}
+
+.longTable tr:nth-child(odd) {
+  background: #aaa;
+  color: #333;
+  height: 22px;
+  word-wrap: normal;
+  vertical-align: bottom;
+  padding-bottom: 5px;
+}
+
+.longTable span {
+  margin-left: 5px;
+  margin-top: 2px;
+}
+
+.longTable p {
+  text-align: right;
+  margin-right: 5px;
+  margin-top: 2px;
+}
+
+.longtable th:only-of-type {
+  background: #fff;
+  color: #404040;
+  height: 40px;
+  vertical-align: bottom;
+  padding-bottom: 5px;
+  text-align: left;
+}
+
+.poa {
+  margin: 0 25px;
+}
+
+.poa th {
+  color: #fff;
+  background: #00a9b9;
+  height: 60px;
+  font-size: 22px;
+  vertical-align: bottom;
+  padding-bottom: 20px;
+}
+
+.poa th:nth-child(odd) {
+  color: #fff;
+  background: #006e78;
+  height: 60px;
+  font-size: 22px;
+  vertical-align: bottom;
+  padding-bottom: 20px;
+}
+
+.poa td {
+  background: #ccc;
+  color: #333;
+  height: 22px;
+  word-wrap: normal;
+  padding: 10px;
+}
+
+.poa td:nth-child(odd) {
+  background: #aaa;
+  color: #333;
+  height: 22px;
+  word-wrap: normal;
+  padding: 10px;
+}
+
+.topslide2 {top: -827}
+.topslide3 {top: -1653}
+.topslide4 {top: -2479}
+.topslide5 {top: -3305}
+.topslide6 {top: -4131}
+.topslide7 {top: -4957}
+.topslide8 {top: -5783}
+.topslide9 {top: -6609}
+.topslide10 {top: -7435}
+.topslide11 {top: -8261}
+.topslide12 {top: -9087}
+.topslide13 {top: -9914}
+.topslide14 {top: -10741}
+.topslide15 {top: -11568}
+.topslide16 {top: -12395}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

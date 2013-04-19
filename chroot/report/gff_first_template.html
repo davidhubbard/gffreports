@@ -1,0 +1,2300 @@
+{** GFF Sample Template **}
+<html>
+<head>
+{**
+//
+// GetFoundFirst.com Reporting Engine
+// Copyright 2013 ndisp.com and getfoundfirst.com
+//
+// This application is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public
+// License as published by the Free Software Foundation; either
+// version 3 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public
+// License along with this code; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+//
+**}
+<title>GetFoundFirst.com Reporting Engine - Sample Template</title>
+<script src="../../img/jquery-1.9.1.min.js"></script>
+
+{** This activates the slideshow mode where you will need to use the "next" and "prev" buttons to change slide **}
+{$presentation_mode = off}
+
+{if $presentation_mode == on}
+<script src="js/scripts.js"></script>
+{/if}
+<link rel="stylesheet" href="css/gff.css"/>
+</head>
+<body>
+<div id="next">
+	<span>Next</span>
+</div>
+<div id="prev">
+	<span>Prev</span>
+</div>
+<div class="sildeNumDiv">
+	<span>Slide Number: <span class="slideNum"></span></span>
+</div>
+{if $presentation_mode == on}
+<div class="overlay">
+{/if}
+<div class="content" id="slideNum1">
+{**---------------reuseable variables---------------**}
+	{$subhundred = array( 4, 10, 20, 30, 40, 50 )}
+	{$subthousand = array( 100, 200, 300, 400, 500, 600, 700, 800, 900 )}
+	{$subtenthousand = array( 1000, 2000, 5000 )}
+	{$subhundredthousand = array( 10000, 20000, 50000 )}
+	{$submillion = array( 100000, 200000, 500000, 1000000 )}
+	{$overmillion = array( 5000000, 10000000, 15000000, 20000000, 25000000, 50000000, 100000000 )}
+
+{**-------------------Total Clicks-------------------**}
+	{$ads_clicks             = sum($ads, "Clicks")}
+	{$keyword_clicks         = sum($keyword, "Clicks")}
+	{$auto_placements_clicks = sum($auto_placements, "Clicks")}
+	{$man_placements_clicks  = sum($man_placements, "Clicks")}
+	{$remark_clicks          = sum($audiences, "Clicks")}
+	{$hourly_clicks          = sum($hourly, "Clicks")}
+	{$totalclick             = $hourly_clicks}
+{**-----------------Total Impressions-----------------**}
+	{$ads_impr               = sum($ads, "Impressions")}
+	{$keyword_impr           = sum($keyword, "Impressions")}
+	{$auto_placements_impr   = sum($auto_placements, "Impressions")}
+	{$man_placements_impr    = sum($man_placements, "Impressions")}
+	{$remark_impr            = sum($audiences, "Impressions")}
+	{$totalimpr              = sum($hourly, "Impressions")}
+{**--------------------Average CTR--------------------**}
+	{$avgctr                 = sprintf("%0.2f", $totalclick/$totalimpr*100)}
+{**---------Average CPA and Total Conversions---------**}
+	{$ads_spend              = sum($ads, "Cost")}
+	{$keyword_spend          = sum($keyword, "Cost")}
+	{$auto_placements_spend  = sum($auto_placements, "Cost")}
+	{$man_placements_spend   = sum($man_placements, "Cost")}
+	{$remark_spend           = sum($audiences, "Cost")}
+	{$totalspend             = sum($hourly, "Cost")}
+
+	{$ads_conv               = sum($ads, "Conv. (1-per-click)")}
+	{$keyword_conv           = sum($keyword, "Conv. (1-per-click)")}
+	{$auto_placements_conv   = sum($auto_placements, "Conv. (1-per-click)")}
+	{$man_placements_conv    = sum($man_placements, "Conv. (1-per-click)")}
+	{$remark_conv            = sum($audiences, "Conv. (1-per-click)")}
+	{$totalconv              = sum($hourly, "Conv. (1-per-click)")}
+
+	{if $totalconv != 0}{$avgcpa = sprintf("%0.2f", $totalspend/$totalconv)}{else}{$avgcpa = 0}{/if}
+{**--------------------Total Ad Spend-------------------**}
+	{$totaladspend           = sprintf("%0.2f", $totalspend)}
+{**--------------------Total Revenue--------------------**}
+	{$ads_rev                = sum($ads, "Total conv. value")}
+	{$keyword_rev            = sum($keyword, "Total conv. value")}
+	{$auto_placements_rev    = sum($auto_placements, "Total conv. value")}
+	{$man_placements_rev     = sum($man_placements, "Total conv. value")}
+	{$remark_rev             = sum($audiences, "Total conv. value")}
+	{$totalrev               = sum($hourly, "Total conv. value")}
+
+	{if $totalrev != 0}{$totalrevenue = sprintf("%0.2f", $totalrev)}
+	{else}{$totalrevenue = sprintf("%0.2f", 0)}
+	{/if}
+{**--------------------Adgroup names--------------------**}
+	{$adgroup_test = " "}
+	{$adgroup_campaign_test = " "}
+	{$adgroup_names = array()}
+	{$adgroup_campaign = array()}
+	{$keyword_count_per_adgroup = array()}
+	{$ctr_sum_per_adgroup = array()}
+	{$avg_ctr_of_adgroups = array()}
+	{$avg_adgroup_ctr = 0}
+	{$i = 0}
+
+	{foreach from=$keyword["all"] item=row}
+	{if $row["Ad group"] == $adgroup_test}
+		{if $adgroup_campaign_test  == $row["Campaign"]}
+		{else}
+			{$adgroup_campaign[$i] = $row["Campaign"]}
+			{$adgroup_names[$i] = $row["Ad group"]}
+			{$adgroup_test = $row["Ad group"]}
+			{$adgroup_campaign_test = $row["Campaign"]}
+			{$i = $i + 1}
+		{/if}
+	{else}
+		{$adgroup_campaign[$i] = $row["Campaign"]}
+		{$adgroup_names[$i] = $row["Ad group"]}
+		{$adgroup_test = $row["Ad group"]}
+		{$adgroup_campaign_test = $row["Campaign"]}
+		{$i = $i + 1}
+	{/if}
+	{/foreach}
+	{$num_of_adgroups = count($adgroup_names)}
+{**----------------campaign network array----------------**}
+	{$campaign_network = array()}
+	{foreach from=$keyword["all"] item=row}
+		{$campaign_network[$row["Campaign"]] = "No Data"}
+	{/foreach}
+	{foreach from=$hourly["all"] item=row}
+		{$campaign_network[$row["Campaign"]] = $row["Network (with search partners)"]}
+	{/foreach}
+{**----------------adgroup network array------- ---------**}
+	{$campaign_of_adgroup = array()}
+	
+	{foreach from=$keyword["all"] item=row}
+	{if $row["Ad group"] == $adgroup_test}
+		{if $adgroup_campaign_test  == $row["Campaign"]}
+		{else}
+			{$campaign_of_adgroup[$row["Ad group"]] = $row["Campaign"]}
+			{$adgroup_test = $row["Ad group"]}
+			{$adgroup_campaign_test = $row["Campaign"]}
+		{/if}
+	{else}
+		{$campaign_of_adgroup[$row["Ad group"]] = $row["Campaign"]}
+		{$adgroup_test = $row["Ad group"]}
+		{$adgroup_campaign_test = $row["Campaign"]}
+	{/if}
+	{/foreach}
+
+	<header></header>
+	
+	<div class="logo"><img src="images/dark-gff.jpg" /></div>
+
+	<h1 class="title">90 Day PPC Audit</h1>
+
+	{$fromdate =  date("M j, Y H:i:s", $ads["start_t"])}
+	{$todate   =  date("M j, Y H:i:s", $ads["end_t"])}
+	<span class="dates">{$fromdate|truncate:12:""} - {$todate|truncate:12:""}</span>
+
+	<footer>
+		<img class="gffLogo" src="images/large-white-gff.png" />
+	</footer>
+
+</div><!-- ###END CONTENT 1###-->
+<div class="content" id="slideNum2">
+	<div class="left"></div>
+	<div class="right">
+
+		<h2>Table of Contents</h2>
+		<div class="contentsList">
+		<ul style="float: left;">
+			<li>i. Account Summary	1</li>
+			<li style="padding-left: 20px;">a. Search</li>
+			<li style="padding-left: 40px;">1) Hour of Day Segmentation</li>
+			<li style="padding-left: 40px;">2) Day of the Week Segmentation</li>
+			<li style="padding-left: 40px;">3) Converting Keywords</li>
+			<li style="padding-left: 40px;">3) Keywords with Negative ROI</li>
+			<li style="padding-left: 40px;">3) Keywords with Positive ROI</li>
+			<li style="padding-left: 40px;">4) Current Keyword Review</li>
+			<li style="padding-left: 40px;">5) Quality Score Review</li>
+			{if ($auto_placements_spend + $man_placements_spend) > 0}
+			<li style="padding-left: 20px;">b. Display</li>
+			<li style="padding-left: 40px;">1) Google Display Network Review</li>
+			{/if}
+			<li>ii. Summary of Key Takeaways</li>
+			<li>iii. Scope of Solution</li>
+			<li>iv. Proposed Package</li>
+		</ul>
+		<ul style="float: left;">
+			<li>1</li>
+			<li>2</li>
+			<li>3</li>
+			<li>4</li>
+			<li>5</li>
+			<li>6</li>
+			<li>7</li>
+			<li>8</li>
+			<li>9</li>
+			<li>10</li>
+			<li>11</li>
+			<li>12</li>
+			{if ($auto_placements_spend + $man_placements_spend) > 0}
+			<li>13</li>
+			<li>14</li>
+			{/if}
+		</ul>
+		</div>
+	</div>
+	<div class="rightBottom">
+		<img class="footerGffLogo" src="images/dark-gff.jpg" />
+	</div>
+</div><!-- ###END CONTENT 2###-->
+<div class="content" id="slideNum3">
+	<div class="left"></div>
+	<div class="right">
+		<h2>{$clientname} <span class="outline1">Account Summary</span></h2>
+		<div class="statsTable">
+			<table border="0" cellspacing="0" cellpadding="0">
+				<tr>
+					<th colspan="7">Account Overview</th>
+				</tr>
+				<tr>
+					<th>Total Spend</th>
+					<th>Clicks</th>
+					<th>Impressions</th>
+					<th>CTR</th>
+					<th>Conversions</th>
+					<th>Conversion Rate</th>
+					<th>Average CPA</th>
+					{if $totalrev  > 0}
+					<th>Revenue</th>
+					{/if}
+					{if $totalrev/$totalspend > 0}
+					<th>ROAS</th>
+					{/if}
+				</tr>
+				<tr>
+					<td>${sprintf("%0.2f", $totalspend)}</td>
+					<td>{$totalclick}</td>
+					<td>{$totalimpr}</td>
+					<td>{$avgctr}%</td>
+					<td>{$totalconv}</td>
+					<td>{sprintf("%0.2f", ($totalconv/$totalclick)*100)}%</td>
+					<td>${$avgcpa}</td>
+					{if $totalrev > 0}
+					<td>{$totalrev}</td>
+					{/if}
+					{if $totalrev/$totalspend > 0}
+					<td>{sprintf("%0.2f", $totalrev/$totalspend)}</td>
+					{/if}
+				</tr>
+			</table>
+
+			<table border="0" cellspacing="0" cellpadding="0"><tbody>
+				{$arr = array()}
+				{$arr.keyword         = "Search"}
+				{if ($auto_placements_spend + $man_placements_spend) > 0}
+				{$arr.auto_placements = "Display"}
+				{$arr.man_placements  = "Remarketing"}
+				{/if}
+				{foreach from=$arr key=k item=h}
+					<tr><th colspan="7">
+					{if $h == "Display"}Display Ads{else}{$h}{/if}
+						</th></tr>
+					<tr><th>
+						Total Spend 
+					</th><th>
+						% of Total
+					</th>{**<th>
+						# Campaigns
+					</th><th>
+						# Adgroups
+					</th>**}<th>
+						Ave CTR
+					</th><th>
+						CPA
+					</th>{if ${$k}_rev > 0}<th>
+						{$h} Revenue
+					</th><th>
+						% of Total
+					</th><th>
+						{$h} ROAS
+					</th>{/if}</tr>
+					<tr><td>
+						<!--Total Spend-->
+						${sprintf("%0.2f", ${$k}_spend)}
+					</td><td>
+						{** % of Total : $totalspend was calculated up above **}
+						{if $totalspend != 0}{sprintf("%0.2f", ${$k}_spend/$totalspend*100)}%{/if}
+					</td>{**<td>
+						<!--# Campaigns-->
+						{$search_count_campaigns = 0}
+						{$display_count_campaigns = 0}
+						{if $h == "Search"}
+							{foreach from=$campaign_network item=n}
+								{if $n == "Google search"}
+									{$search_count_campaigns = $search_count_campaigns + 1}
+								{/if}
+							{/foreach}
+							{$search_count_campaigns}
+						{else}
+							{foreach from=$campaign_network item=n}
+								{if $n == "Display Network"}
+									{$display_count_campaigns = $display_count_campaigns + 1}
+								{/if}
+							{/foreach}
+							{$display_count_campaigns}
+						{/if}
+					</td>**}{**<td>
+						<!--# Adgroups-->
+						{$search_count_adgroups = 0}
+						{$display_count_adgroups = 0}
+						{if $h == "Search"}
+							{foreach from=$adgroup_network item=n}
+								{if $n == "Google search"}
+									{$search_count_adgroups = $search_count_adgroups + 1}
+								{/if}
+							{/foreach}
+							{$search_count_campaigns}
+						{else}
+							{foreach from=$adgroup_network item=n}
+								{if $n == "Display Network"}
+									{$display_count_adgroups = $display_count_adgroups + 1}
+								{/if}
+							{/foreach}
+							{$display_count_campaigns}
+						{/if}
+					</td>**}<td>
+						<!--Ave CTR-->
+						{sprintf("%0.2f", (${$k}_clicks / ${$k}_impr)*100)}%
+					</td><td>
+						<!--CPA-->
+						{if ${$k}_conv != 0}${sprintf("%0.2f", ${$k}_spend / ${$k}_conv)}{else}0 conv. spend = ${sprintf("%0.2f", ${$k}_spend)}.{/if}
+					</td>{if ${$k}_rev > 0}<td>
+						<!--{$h} Revenue-->
+						${sprintf("%0.2f", ${$k}_rev)}
+					</td><td>
+						{** % of Total : $totalrev was calculated up above **}
+						{if $totalrev != 0}{sprintf("%0.2f", ${$k}_rev/$totalrev*100)}%
+						{else}(None){/if}
+					</td><td>
+						<!--{$h} ROAS-->
+						{sprintf("%0.2f", ${$k}_rev/${$k}_spend)}
+					</td>{/if}</tr>
+				{/foreach}
+			</tbody></table>
+		</div>
+	</div>
+	<div class="rightBottom">
+		<img class="footerGffLogo" src="images/dark-gff.jpg" />
+	</div>
+</div><!-- ###END CONTENT 3###-->
+<div class="content" id="slideNum4">
+<div class="left"></div>
+<div class="right">
+<span style="display: none;" class="outline2">Search</span>
+<h2><span class="outline3">Hour of Day Segmentation</span></h2>
+
+{** Hour of Day Graph for Conversions **}
+
+{$pivot = pivottable($hourly, "Hour of day")}
+
+{** David Hubbard - I deleted the second graph and instead I did something simpler:
+	I set up this array, $graphstatarray, and then used foreach to generate 2 graphs
+	(same thing down below for 2 day of week graphs)
+**}
+
+{$graphstatarray = array( "Conv. (1-per-click)" )}
+{foreach from=$graphstatarray item=graphstat}
+
+<div class="graph"><!--Start Graph Hour of Day-->
+	{$sumofstat = sum($hourly, $graphstat)}
+	{$highpoint = 0}
+	{for $hournum=0 to 23}
+		{$data = $pivot[$hournum]}
+		{$datapoint = sum($data, $graphstat)}
+		{if $datapoint > $highpoint}
+			{$highpoint = $datapoint}
+		{/if}
+	{/for}
+		{foreach $overmillion as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $submillion as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subhundredthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subtenthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subhundred as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+<div class="graph1">
+<div class="verticalTitle">{$graphstat|truncate:6:""}</div>
+<table border="0" cellspacing="0" cellpadding="0">
+{$scalenum = $sumofstat}
+
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	4&ensp;&ensp;
+	{else}
+	{sprintf("%0.0f", $scalenum)}
+	{/if}
+</td>
+<td style="border: none"></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	3&ensp;&ensp;
+	{else}
+	{sprintf("%0.0f", $scalenum*.75)}
+	{/if}
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	2&ensp;&ensp;
+	{else}
+	{sprintf("%0.0f", $scalenum*.50)}
+	{/if}
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	1&ensp;&ensp;
+	{else}
+	{sprintf("%0.0f", $scalenum*.25)}
+	{/if}
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	0&ensp;&ensp;
+	{else}
+	0
+	{/if}
+</td>
+<td></td>
+</tr>
+
+<div class="graphBars">
+	{for $hournum=0 to 23}
+		{$data = $pivot[$hournum]}
+		{$barheight = sprintf('%0.0f', sum($data, $graphstat))/$sumofstat*100}
+		<div class="bar" title="{sprintf('%0.0f', sum($data, $graphstat))}" style="float: left;height: {sprintf('%0.0f', $barheight)}%;top: {100-(sprintf('%0.0f', $barheight))}%;width:3.1%;margin-left: .8%;">
+			{if $barheight > 8}
+				<span class="barLabels" style="">{sprintf('%0.0f', sum($data, $graphstat))}</span>
+			{/if}
+		</div>
+	{/for}
+</div>
+
+</table>
+</div>
+<div class="graph2">
+<table border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td></td>
+{for $hournum=0 to 23}
+<td style="width: {850/24}px;">{$hournum}</td>
+{/for}
+</tr>
+</table>
+</div>
+<div class="horizontalTitle">Hour of Day</div>
+{$sumofstat = 100}
+</div><!--End Graph-->
+
+{/foreach}
+
+{** ###End Hour of Day Graph for Conversions### **}
+
+{** Hour of Day Graph for CPA **}
+{** CPA needed to be calulated before the graph code is run **}
+
+{$pivot = pivottable($hourly, "Hour of day")}
+
+{$avgcpaperhour = array()}
+{for $hournum=0 to 23}
+	{$data = $pivot[$hournum]}
+	{$hourlycpa = sum($data, "Conv. (1-per-click)")/sum($data, "Clicks")*100}
+	{$avgcpaperhour[$hournum] = sprintf("%0.2f", $hourlycpa)}
+{/for}
+
+<div class="graph"><!--Start Graph Hour of Day-->
+	{$sumofstat = 0}
+	{$highpoint = 0}
+	{foreach $avgcpaperhour as $datapoint}
+		{if $datapoint > $highpoint}
+			{$highpoint = $datapoint}
+		{/if}
+	{/foreach}
+		{foreach $overmillion as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $submillion as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subhundredthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subtenthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subhundred as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+<div class="graph1">
+<div class="verticalTitle">CPA</div>
+<table border="0" cellspacing="0" cellpadding="0">
+{$scalenum = $sumofstat}
+
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	$4&ensp;&ensp;
+	{else}
+	${sprintf("%0.0f", $scalenum)}
+	{/if}
+</td>
+<td style="border: none"></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	$3&ensp;&ensp;
+	{else}
+	${sprintf("%0.0f", $scalenum*.75)}
+	{/if}
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	$2&ensp;&ensp;
+	{else}
+	${sprintf("%0.0f", $scalenum*.50)}
+	{/if}
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	$1&ensp;&ensp;
+	{else}
+	${sprintf("%0.0f", $scalenum*.25)}
+	{/if}
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	$0&ensp;&ensp;
+	{else}
+	$0
+	{/if}
+</td>
+<td></td>
+</tr>
+
+<div class="graphBars">
+	{foreach $avgcpaperhour as $hourcpa}
+		{$barheight = $hourcpa/$sumofstat*100}
+		<div class="bar" title="{$hourcpa}" style="float: left;height: {sprintf('%0.0f', $barheight)}%;top: {100-(sprintf('%0.0f', $barheight))}%;width:3.1%;margin-left: .8%;">
+			{if $barheight > 8}
+				<span class="barLabels" style="margin-left: 0;">{$hourcpa}</span>
+			{/if}
+		</div>
+	{/foreach}
+</div>
+
+</table>
+</div>
+<div class="graph2">
+<table border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td></td>
+{for $hournum=0 to 23}
+<td style="width: {850/24}px;">{$hournum}</td>
+{/for}
+</tr>
+</table>
+</div>
+<div class="horizontalTitle">Hour of Day</div>
+{$sumofstat = 100}
+</div><!--End Graph-->
+
+{** ###End Hour of Day Graph for CPA### **}
+
+{** Hour of Day Graph for ROAS **}
+{** ROAS needed to be calulated before the graph code is run **}
+
+{if $totalrev > 0}
+{$pivot = pivottable($hourly, "Hour of day")}
+
+{$avgroasperhour = array()}
+{for $hournum=0 to 23}
+	{$data = $pivot[$hournum]}
+	{$hourlyroas = sum($data, "Total conv. value")/sum($data, "Cost")*100}
+	{$avgroasperhour[$hournum] = sprintf("%0.2f", $hourlyroas)}
+{/for}
+
+<div class="graph"><!--Start Graph Hour of Day-->
+	{$sumofstat = 0}
+	{$highpoint = 0}
+	{foreach $avgroasperhour as $datapoint}
+		{if $datapoint > $highpoint}
+			{$highpoint = $datapoint}
+		{/if}
+	{/foreach}
+		{foreach $overmillion as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $submillion as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subhundredthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subtenthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subhundred as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+<div class="graph1">
+<div class="verticalTitle">ROAS</div>
+<table border="0" cellspacing="0" cellpadding="0">
+{$scalenum = $sumofstat}
+
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	$4&ensp;&ensp;
+	{else}
+	${sprintf("%0.0f", $scalenum)}
+	{/if}
+</td>
+<td style="border: none"></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	$3&ensp;&ensp;
+	{else}
+	${sprintf("%0.0f", $scalenum*.75)}
+	{/if}
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	$2&ensp;&ensp;
+	{else}
+	${sprintf("%0.0f", $scalenum*.50)}
+	{/if}
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	$1&ensp;&ensp;
+	{else}
+	${sprintf("%0.0f", $scalenum*.25)}
+	{/if}
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	$0&ensp;&ensp;
+	{else}
+	$0
+	{/if}
+</td>
+<td></td>
+</tr>
+
+<div class="graphBars">
+	{foreach $avgroasperhour as $hourroas}
+		{$barheight = $hourroas/$sumofstat*100}
+		<div class="bar" title="${$hourroas}" style="float: left;height: {sprintf('%0.0f', $barheight)}%;top: {100-(sprintf('%0.0f', $barheight))}%;width:3.1%;margin-left: .8%;">
+			{if $barheight > 8}
+				<span class="barLabels" style="margin-left: 0;">{$hourroas}</span>
+			{/if}
+		</div>
+	{/foreach}
+</div>
+
+</table>
+</div>
+<div class="graph2">
+<table border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td></td>
+{for $hournum=0 to 23}
+<td style="width: {850/24}px;">{$hournum}</td>
+{/for}
+</tr>
+</table>
+</div>
+<div class="horizontalTitle">Hour of Day</div>
+{$sumofstat = 100}
+</div><!--End Graph-->
+
+{/if}
+
+{** ###End Hour of Day Graph for ROAS### **}
+
+</div>
+<div class="rightBottom">
+<img class="footerGffLogo" src="images/dark-gff.jpg" />
+</div>
+</div><!-- ###END CONTENT 4###-->
+<div class="content" id="slideNum5">
+<div class="left"></div>
+<div class="right">
+<h2><span class="outline3">Day of the Week Segmentation</span></h2>
+
+{** Day of Week Graph for Conversions **}
+
+{$daysofweek = array( "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" )}
+{$pivot = pivottable($hourly, "Day of week")}
+
+{** same foreach idea: generate 2 graphs **}
+{foreach from=$graphstatarray item=graphstat}
+
+<div class="graph"><!--Start Graph Day of Week-->
+<div class="graph1">
+	{$sumofstat = sum($hourly, $graphstat)}
+	{$highpoint = 0}
+	{foreach $daysofweek as $day}
+		{$data = $pivot[$day]}
+		{$datapoint = sum($data, $graphstat)}
+		{if $datapoint > $highpoint}
+			{$highpoint = $datapoint}
+		{/if}
+	{/foreach}
+		{foreach $overmillion as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $submillion as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subhundredthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subtenthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subhundred as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+<div class="verticalTitle">{$graphstat|truncate:6:""}</div>
+<table border="0" cellspacing="0" cellpadding="0">
+{$scalenum = $sumofstat}
+
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	4&ensp;&ensp;
+	{else}
+	{sprintf("%0.0f", $scalenum)}
+	{/if}
+</td>
+<td style="border: none"></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	3&ensp;&ensp;
+	{else}
+	{sprintf("%0.0f", $scalenum*.75)}
+	{/if}
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	2&ensp;&ensp;
+	{else}
+	{sprintf("%0.0f", $scalenum*.50)}
+	{/if}
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	1&ensp;&ensp;
+	{else}
+	{sprintf("%0.0f", $scalenum*.25)}
+	{/if}
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	0&ensp;&ensp;
+	{else}
+	0
+	{/if}
+</td>
+<td></td>
+</tr>
+
+<div class="graphBars">
+	{foreach $daysofweek as $day}
+		{$data = $pivot[$day]}
+		{$barheight = sprintf('%0.0f', sum($data, $graphstat))/$sumofstat*100}
+		<div class="bar" title="{sprintf('%0.0f', sum($data, $graphstat))}" style="float: left;height: {sprintf('%0.0f', $barheight)}%;top: {100-(sprintf('%0.0f', $barheight))}%;width:13%;margin-left: .8%;">
+			{if $barheight > 8}
+				<span class="barLabels" style="">{sprintf('%0.0f', sum($data, $graphstat))}</span>
+			{/if}
+		</div>
+	{/foreach}
+</div>
+
+</table>
+</div>
+<div class="graph2">
+<table border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td></td>
+{foreach $daysofweek as $day}
+<td style="width: {850/7}px;">{$day}</td>
+{/foreach}
+</tr>
+</table>
+</div>
+<div class="horizontalTitle">Day of Week</div>
+{$sumofstat = 100}
+</div><!--End Graph-->
+
+{/foreach}
+
+{** ###End Day of Week Graph for Conversions### **}
+
+{** Day of Week Graph for CPA **}
+{** CPA needed to be calulated before the graph code is run **}
+
+{$pivot = pivottable($hourly, "Day of week")}
+
+{$avgcpaperday = array()}
+{foreach from=$daysofweek key=k item=day}
+	{$data = $pivot[$day]}
+	{$dailycpa = sum($data, "Conv. (1-per-click)")/sum($data, "Clicks")*100}
+	{$avgcpaperday[$k] = sprintf("%0.2f", $dailycpa)}
+{/foreach}
+
+<div class="graph"><!--Start Graph Day of Week-->
+<div class="graph1">
+	{$sumofstat = 0}
+	{$highpoint = 0}
+	{foreach $avgcpaperday as $day}
+		{$datapoint = $day}
+		{if $datapoint > $highpoint}
+			{$highpoint = $datapoint}
+		{/if}
+	{/foreach}
+		{foreach $overmillion as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $submillion as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subhundredthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subtenthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subhundred as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+<div class="verticalTitle">CPA</div>
+<table border="0" cellspacing="0" cellpadding="0">
+{$scalenum = $sumofstat}
+
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	$4&ensp;&ensp;
+	{else}
+	${sprintf("%0.0f", $scalenum)}
+	{/if}
+</td>
+<td style="border: none"></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	$3&ensp;&ensp;
+	{else}
+	${sprintf("%0.0f", $scalenum*.75)}
+	{/if}
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	$2&ensp;&ensp;
+	{else}
+	${sprintf("%0.0f", $scalenum*.50)}
+	{/if}
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	$1&ensp;&ensp;
+	{else}
+	${sprintf("%0.0f", $scalenum*.25)}
+	{/if}
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	$0&ensp;&ensp;
+	{else}
+	$0
+	{/if}
+</td>
+<td></td>
+</tr>
+
+<div class="graphBars">
+	{foreach from=$avgcpaperday key=k item=day}
+		{$barheight = $day/$sumofstat*100}
+		<div class="bar" title="${$day}" style="float: left;height: {sprintf('%0.0f', $barheight)}%;top: {100-(sprintf('%0.0f', $barheight))}%;width:13%;margin-left: .8%;">
+			{if $barheight > 9}
+				<span class="barLabels" style="">${$day}</span>
+			{/if}
+		</div>
+	{/foreach}
+</div>
+
+</table>
+</div>
+<div class="graph2">
+<table border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td></td>
+{foreach $daysofweek as $day}
+<td style="width: {850/7}px;">{$day}</td>
+{/foreach}
+</tr>
+</table>
+</div>
+<div class="horizontalTitle">Day of Week</div>
+{$sumofstat = 100}
+</div><!--End Graph-->
+
+{** ###End Day of Week Graph for CPA### **}
+
+{** Day of Week Graph for ROAS **}
+{** ROAS needed to be calulated before the graph code is run **}
+
+{if sum($hourly, "Total conv. value") > 0}
+
+{$pivot = pivottable($hourly, "Day of week")}
+
+{$avgroasperday = array()}
+{foreach from=$daysofweek key=k item=day}
+	{$data = $pivot[$day]}
+	{$dailyroas = sum($data, "Total conv. value")/sum($data, "Cost")*100}
+	{$avgroasperday[$k] = sprintf("%0.2f", $dailyroas)}
+{/foreach}
+
+<div class="graph"><!--Start Graph Day of Week-->
+<div class="graph1">
+	{$sumofstat = 0}
+	{$highpoint = 0}
+	{foreach $avgroasperday as $day}
+		{$datapoint = $day}
+		{if $datapoint > $highpoint}
+			{$highpoint = $datapoint}
+		{/if}
+	{/foreach}
+		{foreach $overmillion as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $submillion as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subhundredthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subtenthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subhundred as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+<div class="verticalTitle">ROAS</div>
+<table border="0" cellspacing="0" cellpadding="0">
+{$scalenum = $sumofstat}
+
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	$4&ensp;&ensp;
+	{else}
+	${sprintf("%0.0f", $scalenum)}
+	{/if}
+</td>
+<td style="border: none"></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	$3&ensp;&ensp;
+	{else}
+	${sprintf("%0.0f", $scalenum*.75)}
+	{/if}
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	$2&ensp;&ensp;
+	{else}
+	${sprintf("%0.0f", $scalenum*.50)}
+	{/if}
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	$1&ensp;&ensp;
+	{else}
+	${sprintf("%0.0f", $scalenum*.25)}
+	{/if}
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	$0&ensp;&ensp;
+	{else}
+	$0
+	{/if}
+</td>
+<td></td>
+</tr>
+
+<div class="graphBars">
+	{foreach from=$avgroasperday key=k item=day}
+		{$barheight = $day/$sumofstat*100}
+		<div class="bar" title="${$day}" style="float: left;height: {sprintf('%0.0f', $barheight)}%;top: {100-(sprintf('%0.0f', $barheight))}%;width:13%;margin-left: .8%;">
+			{if $barheight > 9}
+				<span class="barLabels" style="">${$day}</span>
+			{/if}
+		</div>
+	{/foreach}
+</div>
+
+</table>
+</div>
+<div class="graph2">
+<table border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td></td>
+{foreach $daysofweek as $day}
+<td style="width: {850/7}px;">{$day}</td>
+{/foreach}
+</tr>
+</table>
+</div>
+<div class="horizontalTitle">Day of Week</div>
+{$sumofstat = 100}
+</div><!--End Graph-->
+
+{/if}
+
+{** ###End Day of Week Graph for ROAS### **}
+
+</div>
+<div class="rightBottom">
+<img class="footerGffLogo" src="images/dark-gff.jpg" />
+</div>
+</div><!-- ###END CONTENT 5###-->
+<div class="content" id="slideNum6">
+<div class="left"></div>
+<div class="right">
+<h2><span class="outline3">Converting Keywords</span></h2>
+<table style="margin: 0 auto;margin-top: -45px;"><tbody><tr>
+	{$sorted_keyword_table = sort($keyword["all"] , "-#Conv. (1-per-click)", "-#Cost")}
+	{$pivot = pivottable($sorted_keyword_table, "Keyword")}
+	{$total_top_kw_convs = 0}
+	<td><div class="longTable" style="margin: 0;">
+	<table border="0" cellspacing="0" cellpadding="0"><tbody>
+	<tr>
+		<th colspan="5">Top Coverting Keywords</th>
+	</tr>
+	<tr valign="top">
+		<th>Keyword</th>
+		<th>Impr.</th>
+		<th>Clicks</th>
+		<th>Spend</th>
+		<th>Conv.</th>
+	</tr>
+	{foreach from=$pivot key=kw item=data}
+	{if sum($data, "Conv. (1-per-click)") > 0}
+	<tr valign="middle" style="font-size: 12px;"><td><span>{$kw}</span></td><td><p>{sum($data, "Impressions")}</p></td><td><p>{sum($data, "Clicks")}</p></td><td><p>{sprintf("%0.2f", sum($data, "Cost"))}</p></td><td><p>{sum($data, "Conv. (1-per-click)")}</p></td></tr>
+	{$total_top_kw_convs = $total_top_kw_convs + sum($data, "Conv. (1-per-click)")}
+	{if $data@index > 20}{break}{/if}
+	{/if}
+	{/foreach}
+	<tr>
+		<th colspan="4" style="background: #00a9b9;color: #fff;height: 25px;">Total Conv. of Top Keywords</th>
+		<td style="background: #404040;color: #fff;vertical-align: bottom; padding-bottom: 5px;"><p>{$total_top_kw_convs}</p></td>
+	</tr>
+	<tr style="border-top: 1px solid #ccc;">
+		<th colspan="4" style="background: #00a9b9;color: #fff;height: 25px;">Percent of Total Conv.</th>
+		<td style="background: #404040;color: #fff;vertical-align: bottom; padding-bottom: 5px;"><p>{sprintf("%0.2f", $total_top_kw_convs/$totalconv)*100}%</p></td>
+	</tr>
+	</tbody></table>
+	</div></td>
+	<td><div class="longTable">
+	{$total_top_no_conv_kw_spend = 0}
+	{$sorted_keyword_table = sort($keyword["all"] , "-#Cost")}
+	{$pivot = pivottable($sorted_keyword_table, "Keyword")}
+	{$i = 0}
+	<table border="0" cellspacing="0" cellpadding="0"><tbody>
+	<tr>
+		<th colspan="5">High Cost No Convertions</th>
+	</tr>
+	<tr valign="top">
+		<th>Keyword</th>
+		<th>Impr.</th>
+		<th>Clicks</th>
+		<th>Spend</th>
+	</tr>
+	{foreach from=$pivot key=kw item=data}
+		{if sum($data, "Cost") > 0}
+			{if sum($data, "Conv. (1-per-click)") == 0}
+				<tr valign="middle" style="font-size: 12px;"><td><span>{$kw}</span></td><td><p>	{sum($data, "Impressions")}</p></td><td><p>{sum($data, "Clicks")}</p></td><td><p>{sprintf("%0.2f", sum($data, "Cost"))}</p></td></tr>
+				{$total_top_no_conv_kw_spend = $total_top_no_conv_kw_spend + sprintf("%0.2f", sum($data, "Cost"))}
+				{$i = $i + 1}
+				{if $i > 21}{break}{/if}
+			{/if}
+		{/if}
+	{/foreach}
+	<tr>
+		<th colspan="3" style="background: #00a9b9;color: #fff;height: 25px;">Total Conv. of Top Keywords</th>
+		<td style="background: #404040;color: #fff;vertical-align: bottom; padding-bottom: 5px;"><p>${$total_top_no_conv_kw_spend}</p></td>
+	</tr>
+	<tr style="border-top: 1px solid #ccc;">
+		<th colspan="3" style="background: #00a9b9;color: #fff;height: 25px;">Percent of Total Spend</th>
+		<td style="background: #404040;color: #fff;vertical-align: bottom; padding-bottom: 5px;"><p>{sprintf("%0.2f", $total_top_no_conv_kw_spend/$totalspend)*100}%</p></td>
+	</tr>
+	</tbody></table>
+	</div></td>
+</tr></tbody></table>
+</div>
+<div class="rightBottom">
+<img class="footerGffLogo" src="images/dark-gff.jpg" />
+</div>
+</div><!-- ###END CONTENT 6###-->
+<div class="content" id="slideNum7">
+<div class="left"></div>
+<div class="right">
+<h2>Keywords with Negative ROI</h2>
+
+{$keyword_by_roi = sort($keyword["all"] , "#Conv. value / cost")}
+{$pivot = pivottable($keyword_by_roi, "Keyword")}
+
+{$bottom_kw_by_roi = array()}
+{$bottom_kw_by_roi_roi = array()}
+{$i = 0}
+
+{foreach from=$pivot key=kw item=row}
+		{if sum($row, "Conv. value / cost") > 0}
+			{$wasted_spend = sum($row, "Cost")-(sum($row, "Cost")*sum($row, "Conv. value / cost"))}
+				{if $wasted_spend > 0}
+					{$bottom_kw_by_roi[$kw] = $wasted_spend}
+					{$i = $i + 1}
+					{if $i > 17}{break}{/if}
+				{/if}
+		{/if}
+{/foreach}
+
+{$bottom_kw_by_roi_sorted = arsort($bottom_kw_by_roi)}
+
+{$highpoint = 0}
+	{foreach from=$bottom_kw_by_roi item=s}
+		{$datapoint = $s}
+		{if $datapoint > $highpoint}
+			{$highpoint = $datapoint}
+		{/if}
+	{/foreach}
+		{foreach $subhundredthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subtenthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subhundred as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+
+<table class="horizontalGraph">
+{$total_bottom_kw_by_roi = 0}
+{foreach from=$bottom_kw_by_roi key=k item=roi}
+	{$new_roi = sprintf("%0.2f", $roi)}
+	{$bar_widith = ($new_roi/$sumofstat)*100}
+	<tr>
+		<td class="horizontalChartLabel">{$k}</td><td class="barHolder"><div title="{$new_roi}" class="horizontalBar" style="width: {$bar_widith}%"><span>${$new_roi}</span></div></td>
+	</tr>
+	{$total_bottom_kw_by_roi = $total_bottom_kw_by_roi + $new_roi}
+{/foreach}
+	<tr style="border-top: 1px solid #404040">
+		<th style="color: #404040;height: 30px;vertical-align: bottom;padding-bottom: 5px;text-align: left;">Total Wasted Spend</th><td style="color: red;height: 30px;vertical-align: bottom;padding-bottom: 5px;text-align: left;">${$total_bottom_kw_by_roi}</td>
+	</tr>
+</table>
+
+</div>
+<div class="rightBottom">
+<img class="footerGffLogo" src="images/dark-gff.jpg" />
+</div>
+</div><!-- ###END CONTENT 7###-->
+<div class="content" id="slideNum8">
+<div class="left"></div>
+<div class="right">
+<h2>Keywords with Positive ROI</h2>
+
+{$keyword_by_roi = sort($keyword["all"] , "#Conv. value / cost")}
+{$pivot = pivottable($keyword_by_roi, "Keyword")}
+
+{$bottom_kw_by_roi = array()}
+{$bottom_kw_by_roi_roi = array()}
+{$i = 0}
+
+{foreach from=$pivot key=kw item=row}
+		{if sum($row, "Conv. value / cost") > 0}
+			{$wasted_spend = sum($row, "Cost")-(sum($row, "Cost")*sum($row, "Conv. value / cost"))}
+				{if $wasted_spend lt 0}
+					{$bottom_kw_by_roi[$kw] = $wasted_spend * -1}
+					{$i = $i + 1}
+					{if $i > 17}{break}{/if}
+				{/if}
+		{/if}
+{/foreach}
+
+{$bottom_kw_by_roi_sorted = arsort($bottom_kw_by_roi)}
+
+{$highpoint = 0}
+	{foreach from=$bottom_kw_by_roi item=s}
+		{$datapoint = $s}
+		{if $datapoint > $highpoint}
+			{$highpoint = $datapoint}
+		{/if}
+	{/foreach}
+		{foreach $subhundredthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subtenthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subhundred as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+
+<table class="horizontalGraph">
+{$total_bottom_kw_by_roi = 0}
+{foreach from=$bottom_kw_by_roi key=k item=roi}
+	{$new_roi = sprintf("%0.2f", $roi)}
+	{$bar_widith = ($new_roi/$sumofstat)*100}
+	<tr>
+		<td class="horizontalChartLabel">{$k}</td><td class="barHolder"><div title="{$new_roi}" class="horizontalBar" style="width: {$bar_widith}%"><span style="color: green">${$new_roi}</span></div></td>
+	</tr>
+	{$total_bottom_kw_by_roi = $total_bottom_kw_by_roi + $new_roi}
+{/foreach}
+	<tr style="border-top: 1px solid #404040">
+		<th style="color: #404040;height: 30px;vertical-align: bottom;padding-bottom: 5px;text-align: left;">Total</th><td style="color: green;height: 30px;vertical-align: bottom;padding-bottom: 5px;text-align: left;">${$total_bottom_kw_by_roi}</td>
+	</tr>
+</table>
+
+</div>
+<div class="rightBottom">
+<img class="footerGffLogo" src="images/dark-gff.jpg" />
+</div>
+</div><!-- ###END CONTENT 7###-->
+<div class="content" id="slideNum9">
+<div class="left"></div>
+<div class="right">
+<h2><span class="outline3">Current Keyword Review</span></h2>
+
+	{$keyword_eligible_count = 0}
+	{$keyword_no_impr_count = 0}
+	{foreach from=$keyword.all key=i item=row}
+		{if $row["Status"] == "eligible"}
+			{$keyword_eligible_count = $keyword_eligible_count + 1}
+			{if $row["Impressions"] == 0}
+				{$keyword_no_impr_count = $keyword_no_impr_count + 1}
+			{/if}
+		{/if}
+	{/foreach}
+	{$adgroup_count = 0}
+	{$lastadgroup = " "}
+	{foreach from=$keyword.all key=i item=row}
+		{if $row["Ad group"] !== $lastadgroup}
+			{$adgroup_count = $adgroup_count + 1}
+			{$lastadgroup = $row["Ad group"]}
+		{/if}
+	{/foreach}
+	{$keyword_eligble_with_impr = $keyword_eligible_count - $keyword_no_impr_count}
+
+<div class="statsTable">
+<table border="0" cellspacing="0" cellpadding="0"><tbody>
+	<tr>
+		<th colspan="4">Eligible Keywords</th>
+	</tr>
+	<tr>
+		<th>Total Number of Eligible Keywords</th>
+		<th>0 Impression Eligible Keywords</th>
+		<th>Keywords with Impressions</th>
+		{**<th>Average # of KWs per Adgroup</th>**}
+	</tr>
+	<tr>
+		<td>
+			{$keyword_eligible_count}
+		</td><td>
+			{$keyword_no_impr_count}
+		</td><td>
+			{$keyword_eligble_with_impr}
+		</td>{**<td>
+			{sprintf("%0.2f", count($keyword["all"]) / ($adgroup_count + 1))}
+		</td>**}
+	</tr>
+</tbody></table>
+</div>
+
+	{$keyword_converting_count = 0}
+	{$keyword_no_conv_with_impr_count = 0}
+	{foreach from=$keyword.all key=i item=row}
+		{if $row["Conv. (1-per-click)"] > 0}
+			{$keyword_converting_count = $keyword_converting_count + 1}
+		{/if}
+	{/foreach}
+
+<div class="statsTable">
+<table border="0" cellspacing="0" cellpadding="0"><tbody>
+	<tr>
+		<th colspan="4">Converting Keywords</th>
+	</tr>
+	<tr>
+		<th>Converting Keywords</th>
+		<th>Non-Converting Keywords with Impressions</th>
+		<th>% of Eligible Keywords that Convert</th>
+		<th>ROI per Impression</th>
+	</tr>
+	<tr>
+		<td>
+			{$keyword_converting_count}
+		</td><td>
+			{$keyword_eligble_with_impr - $keyword_converting_count}
+		</td><td>
+			{sprintf("%0.2f", ($keyword_converting_count/$keyword_eligible_count)*100)}%
+		</td><td>
+			{if $totalrev == 0}
+				No Revenue Recorded
+			{else}
+				${sprintf("%0.2f", ($totalrev-$totalspend)/$totalimpr)}
+			{/if}
+		</td>
+	</tr>
+</tbody></table>
+</div>
+
+{$pivot = pivottable($keyword, "Match type")}
+<div class="longTable">
+<table border="0" cellspacing="0" cellpadding="0"><tbody>
+	<tr>
+		<th colspan="4">Review by Match Type</th>
+	</tr>
+	<tr>
+		<th>Match Type</th>
+		<th>Ave. CPA</th>
+		<th>Ave. Conversion Rate</th>
+		<th>Ave. CTR</th>
+		<th>Conversions</th>
+	</tr>
+	{foreach from=$pivot key=matchtype item=matches}
+		<tr><td><span>{$matchtype}</span></td>
+		<td>
+			{$spend = sum($matches, "Cost")}
+			{$conv = sum($matches, "Conv. (1-per-click)")}
+			{$clicks = sum($matches, "Clicks")}
+			{$impr = sum($matches, "Impressions")}
+			{if $conv != 0}
+				<p>${sprintf("%0.2f", $spend/$conv)}</p>
+			{else}
+				<p>0 conversions: spend of ${sprintf("%0.2f", $spend)}.</p>
+			{/if}
+		</td>
+		<td><p>{sprintf("%0.2f", $conv/$clicks*100)}%</p></td>
+		<td><p>{sprintf("%0.2f", sum($matches, "Clicks")/$impr*100)}%</p></td>
+		<td><p>{sprintf("%0.2f", $conv)}</p></td>
+		</tr>
+	{/foreach}
+</tbody></table>
+</div>
+</div>
+<div class="rightBottom">
+<img class="footerGffLogo" src="images/dark-gff.jpg" />
+</div>
+</div><!-- ###END CONTENT 7###-->
+<div class="content" id="slideNum10">
+<div class="left"></div>
+<div class="right">
+<h2><span class="outline3">Quality Score Review</span></h2>
+
+{** Histgram of Quality Scores **}
+
+{$hist = array()}
+{for $row = 1 to 10}
+    {$hist[$row] = 0}
+{/for}
+{foreach from=$keyword["all"] key=rownumber item=row}
+{if isset($hist[$row["Quality score"]])}
+    {$hist[$row["Quality score"]] = $hist[$row["Quality score"]] + 1}
+{else}
+    {$hist[$row["Quality score"]] = 1}
+{/if}
+{/foreach}
+
+<div class="graph"><!--Start Graph Day of Week-->
+<div class="graph1">
+	{$graphstat = "Quality score"}
+	{$sumofstat = sum($keyword, $graphstat)}
+	{$highpoint = 0}
+	{foreach from=$hist key=qs item=qs_score}
+		{if $qs_score@last}
+			{continue}
+		{/if}
+		{$datapoint = $qs_score}
+		{if $datapoint > $highpoint}
+			{$highpoint = $datapoint}
+		{/if}
+	{/foreach}
+		{foreach $overmillion as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $submillion as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subhundredthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subtenthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subhundred as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+<div class="verticalTitle"># of Keywords</div>
+<table border="0" cellspacing="0" cellpadding="0">
+{$scalenum = $sumofstat}
+
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	4&ensp;&ensp;
+	{else}
+	{sprintf("%0.0f", $scalenum)}
+	{/if}
+</td>
+<td style="border: none"></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	3&ensp;&ensp;
+	{else}
+	{sprintf("%0.0f", $scalenum*.75)}
+	{/if}
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	2&ensp;&ensp;
+	{else}
+	{sprintf("%0.0f", $scalenum*.50)}
+	{/if}
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	1&ensp;&ensp;
+	{else}
+	{sprintf("%0.0f", $scalenum*.25)}
+	{/if}
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	0&ensp;&ensp;
+	{else}
+	0
+	{/if}
+</td>
+<td></td>
+</tr>
+
+<div class="graphBars">
+	{foreach from=$hist key=qs item=qs_score}
+		{if $qs_score@last}
+			{continue}
+		{/if}
+		{$barheight = $qs_score/$sumofstat*100}
+		<div class="bar" title="{sprintf('%0.0f', $qs_score)}" style="float: left;height: {sprintf('%0.0f', $barheight)}%;top: {100-(sprintf('%0.0f', $barheight))}%;width:8.9%;margin-left: .8%;">
+			{if $barheight > 8}
+				<span class="barLabels" style="">{sprintf('%0.0f', $qs_score)}</span>
+			{/if}
+		</div>
+	{/foreach}
+</div>
+
+</table>
+</div>
+<div class="graph2">
+<table border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td></td>
+{foreach from=$hist key=qs item=qs_score}
+{if $qs_score@last}
+	{continue}
+{/if}
+<td style="width: {850/10}px;">{$qs}</td>
+{/foreach}
+</tr>
+</table>
+</div>
+<div class="horizontalTitle">Quality Score</div>
+{$sumofstat = 100}
+</div><!--End Graph-->
+
+{** ###End Histgram of Quality Scores### **}
+
+{**  Keyword Total Cost by Quality Scores **}
+
+{$pivot = pivottable($keyword, "Quality score")}
+
+{$graphstat = "Cost"}
+
+<div class="graph"><!--Start Graph Day of Week-->
+<div class="graph1">
+	{$sumofstat = sum($keyword, $graphstat)}
+	{$highpoint = 0}
+	{for $qs = 1 to 10}
+		{if !isset($pivot[$qs])}
+		{else}
+			{$data = $pivot[$qs]}
+			{$datapoint = sum($data, $graphstat)}
+			{if $datapoint > $highpoint}
+				{$highpoint = $datapoint}
+			{/if}
+		{/if}
+		{$datapoint = sum($data, $graphstat)}
+	{/for}
+		{foreach $overmillion as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $submillion as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subhundredthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subtenthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subhundred as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+<div class="verticalTitle">{$graphstat|truncate:6:""}</div>
+<table border="0" cellspacing="0" cellpadding="0">
+{$scalenum = $sumofstat}
+
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	4&ensp;&ensp;
+	{else}
+	{sprintf("%0.0f", $scalenum)}
+	{/if}
+</td>
+<td style="border: none"></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	3&ensp;&ensp;
+	{else}
+	{sprintf("%0.0f", $scalenum*.75)}
+	{/if}
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	2&ensp;&ensp;
+	{else}
+	{sprintf("%0.0f", $scalenum*.50)}
+	{/if}
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	1&ensp;&ensp;
+	{else}
+	{sprintf("%0.0f", $scalenum*.25)}
+	{/if}
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	0&ensp;&ensp;
+	{else}
+	0
+	{/if}
+</td>
+<td></td>
+</tr>
+
+<div class="graphBars">
+	{for $qs = 1 to 10}
+		{if isset($pivot[$qs])}
+			{$data = $pivot[$qs]}
+		{/if}
+		{$qs_cost = sum($data, $graphstat)}
+		{$barheight = sprintf('%0.0f', $qs_cost)/$sumofstat*100}
+		<div class="bar" title="${sprintf('%0.2f', $qs_cost)}" style="float: left;height: {sprintf('%0.0f', $barheight)}%;top: {100-(sprintf('%0.0f', $barheight))}%;width:8.9%;margin-left: .8%;">
+			{if $barheight > 8}
+				<span class="barLabels" style="">${sprintf('%0.2f', $qs_cost)}</span>
+			{/if}
+		</div>
+	{/for}
+</div>
+
+</table>
+</div>
+<div class="graph2">
+<table border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td></td>
+{for $qs = 1 to 10}
+<td style="width: {850/10}px;">{$qs}</td>
+{/for}
+</tr>
+</table>
+</div>
+<div class="horizontalTitle">Quality Scores</div>
+{$sumofstat = 100}
+</div><!--End Graph-->
+{**  ###END Keyword Total Cost by Quality Scores### **}
+
+{**  CPA by Quality Scores **}
+
+{$sum_numerator = 0}
+{$sum_denominator = 0}
+{$weighted_cpa_by_qs = array()}
+
+{for $qs = 1 to 10}
+	{foreach from=$keyword["all"] item=row}
+		{if $row["Quality score"] == $qs}
+			{$sum_numerator = $sum_numerator + ($row["Conv. (1-per-click)"]*$row["Cost / conv. (1-per-click)"])}
+			{$sum_denominator = $sum_denominator + $row["Conv. (1-per-click)"]}
+		{/if}
+	{/foreach}
+	{if $sum_denominator > 0}
+		{$weighted_cpa_by_qs[$qs] = $sum_numerator/$sum_denominator}
+	{else}
+		{$weighted_cpa_by_qs[$qs] = 0}
+	{/if}
+	{$sum_numerator = 0}
+	{$sum_denominator = 0}
+{/for}
+
+<div class="graph"><!--Start Graph Day of Week-->
+<div class="graph1">
+	{$highpoint = 0}
+	{for $qs = 1 to 10}
+		{$datapoint = $weighted_cpa_by_qs[$qs]}
+		{if $datapoint > $highpoint}
+			{$highpoint = $datapoint}
+		{/if}
+	{/for}
+		{foreach $overmillion as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $submillion as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subhundredthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subtenthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subthousand as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+		{foreach $subhundred as $topofscale}
+			{if $highpoint lt $topofscale}
+				{$sumofstat = $topofscale}
+				{break}
+			{/if}
+		{/foreach}
+<div class="verticalTitle">CPA</div>
+<table border="0" cellspacing="0" cellpadding="0">
+{$scalenum = $sumofstat}
+
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	4&ensp;&ensp;
+	{else}
+	{sprintf("%0.0f", $scalenum)}
+	{/if}
+</td>
+<td style="border: none"></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	3&ensp;&ensp;
+	{else}
+	{sprintf("%0.0f", $scalenum*.75)}
+	{/if}
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	2&ensp;&ensp;
+	{else}
+	{sprintf("%0.0f", $scalenum*.50)}
+	{/if}
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	1&ensp;&ensp;
+	{else}
+	{sprintf("%0.0f", $scalenum*.25)}
+	{/if}
+</td>
+<td></td>
+</tr>
+<tr>
+<td style="position: relative;top: 22px;">
+	{if $scalenum == 4}
+	0&ensp;&ensp;
+	{else}
+	0
+	{/if}
+</td>
+<td></td>
+</tr>
+
+<div class="graphBars">
+	{for $qs = 1 to 10}
+		{$barheight = sprintf('%0.0f', $weighted_cpa_by_qs[$qs])/$sumofstat*100}
+		<div class="bar" title="${sprintf('%0.2f', $qs_cost)}" style="float: left;height: {sprintf('%0.0f', $barheight)}%;top: {100-(sprintf('%0.0f', $barheight))}%;width:8.9%;margin-left: .8%;">
+			{if $barheight > 8}
+				<span class="barLabels" style="">${sprintf('%0.2f', $weighted_cpa_by_qs[$qs])}</span>
+			{/if}
+		</div>
+	{/for}
+</div>
+
+</table>
+</div>
+<div class="graph2">
+<table border="0" cellspacing="0" cellpadding="0">
+<tr>
+<td></td>
+{for $qs = 1 to 10}
+<td style="width: {850/10}px;">{$qs}</td>
+{/for}
+</tr>
+</table>
+</div>
+<div class="horizontalTitle">Quality Scores</div>
+{$sumofstat = 100}
+</div><!--End Graph-->
+
+
+
+</div>
+<div class="rightBottom">
+<img class="footerGffLogo" src="images/dark-gff.jpg" />
+</div>
+</div><!-- ###END CONTENT 8###-->
+<div class="content" id="slideNum11">
+<div class="left"></div>
+<div class="right">
+<h2>Ad Review</h2>
+
+{$overall_avg_position = 0}
+{foreach from=$ads["all"] item=row}
+	{$avgpos = $row["Avg. position"]}
+	{$weighted_impr_score = ($row["Impressions"] / $totalimpr)*100}
+	{$weighted_avg_pos = $avgpos*$weighted_impr_score}
+	{$overall_avg_position = $overall_avg_position + $weighted_avg_pos}
+{/foreach}
+
+{**
+{foreach from=$adgroup_names item=adgroup}
+	{$keyword_count_per_adgroup[$adgroup] = 0}
+	{$ctr_sum_per_adgroup[$adgroup] = 0}
+	{$avg_ctr_of_adgroups[$adgroup] = 0}
+{/foreach}
+
+{foreach from=$adgroup_names key=k item=adgroup}
+	{foreach from=$keyword["all"] item=row}
+		{if $adgroup == $row["Ad group"]}
+			{if $adgroup_campaign[$k] == $row["Campaign"]}
+				{$keyword_count_per_adgroup[$adgroup] = $keyword_count_per_adgroup[$adgroup] + 1}
+				{$ctr_sum_per_adgroup[$adgroup] = $ctr_sum_per_adgroup[$adgroup] + $row["CTR"]}
+				{$avg_ctr_of_adgroups[$adgroup] = $ctr_sum_per_adgroup[$adgroup] / $keyword_count_per_adgroup[$adgroup]}
+			{/if}
+		{/if}
+	{/foreach}
+{/foreach}
+
+{foreach $avg_ctr_of_adgroups as $n}
+	{$avg_adgroup_ctr = $avg_adgroup_ctr + $n}
+{/foreach}
+
+{$avg_adgroup_ctr = $avg_adgroup_ctr / count($adgroup_names)}
+**}
+<div class="statsTable">
+
+<table border="0" cellspacing="0" cellpadding="0">
+	<tr>
+		<th colspan="4">Ad Review</th>
+	</tr>
+	<tr>
+		<th>Average # of Ads per Adgroup</th>
+		<th>Average Ad Position</th>
+		<th>Average Adgroup CTR</th>
+		<th>Average Campaign CTR</th>
+	</tr>
+	<tr>
+		<td>{sprintf("%0.2f", count($ads["all"]) / ($adgroup_count + 1))}</td>
+		<td>{sprintf("%0.1f", $overall_avg_position/100)}</td>
+		<td>needs to be calculated</td>
+		<td>needs to be calculated</td>
+	</tr>
+</table>
+</div> 
+
+
+
+</div>
+<div class="rightBottom">
+<img class="footerGffLogo" src="images/dark-gff.jpg" />
+</div>
+</div><!-- ###END CONTENT 9###-->
+<div class="content" id="slideNum12">
+<div class="left"></div>
+<div class="right">
+<span style="display: none;" class="outline2">Display</span>
+<h2><span class="outline3">Google Display Network Review</span></h2>
+{if ($auto_placements_spend + $man_placements_spend) > 0}
+<div class="statsTable">
+<table border="0" cellspacing="0" cellpadding="0"><tbody>
+	{$arr = array()}
+	{$arr.man_placements = "Managed Placements"}
+	{$arr.auto_placements  = "Automatic Placements"}
+	{foreach from=$arr key=k item=h}
+		{if ${$k}_impr == 0}
+			<tr><th>No {$k}</th></tr>
+			{continue}
+		{/if}
+	<tr><th>
+		{if $h == "Managed Placements"}Managed Placements{else}{$h}{/if}
+		</th></tr>
+		<tr><th>
+			Spend
+		</th><th>
+			Impressions
+		</th><th>
+			Clicks
+		</th><th>
+			CTR
+		</th><th>
+			CPA
+		</th><th>
+			ROAS
+		</th><th>
+			PPI
+		</th></tr>
+		<tr><td>
+			<!--Spend-->
+			${sprintf("%0.2f", ${$k}_spend)}
+		</td><td>
+			<!--Impressions-->
+			{sprintf("%0.0f", ${$k}_impr)}
+		</td><td>
+			<!--Clicks-->
+			{sprintf("%0.0f", ${$k}_clicks)}
+		</td><td>
+			<!--CTR-->
+			{sprintf("%0.2f", (${$k}_clicks/${$k}_impr)*100)}%
+		</td><td>
+			<!--CPA-->
+			{if ${$k}_conv == 0}
+				Conv. = 0
+			{else}
+				${sprintf("%0.2f", (${$k}_spend/${$k}_conv)*100)}
+			{/if}
+		</td><td>
+			<!--ROAS-->
+			{if ${$k}_spend == 0}
+				Spend = 0
+			{else}
+				{sprintf("%0.0f", (${$k}_rev/${$k}_spend)*100)}
+			{/if}
+		</td><td>
+			<!--PPI-->
+			{sprintf("%0.2f", (${$k}_rev/${$k}_impr)*100)}
+		</td></tr>
+	{/foreach}
+</tbody></table>
+</div>
+{else}
+	<h3 style="margin-left: 40px;margin-top: 40px;">No display network traffic</h3>
+{/if}
+</div>
+<div class="rightBottom">
+<img class="footerGffLogo" src="images/dark-gff.jpg" />
+</div>
+</div><!-- ###END CONTENT 10###-->
+<div class="content" id="slideNum13">
+<div class="left"></div>
+<div class="right">
+<h2><span class="outline1">Summary of Key Takeaways</span></h2>
+
+<h3>The Good</h3>
+<ul>
+	<li>Lorem ipsum dolor sit amet, consectetur adipiscing elit</li>
+	<li>Lorem ipsum dolor sit amet, consectetur adipiscing elit</li>
+	<li>Lorem ipsum dolor sit amet, consectetur adipiscing elit</li>
+	<li>Lorem ipsum dolor sit amet, consectetur adipiscing elit</li>
+	<li>Lorem ipsum dolor sit amet, consectetur adipiscing elit</li>
+	<li>Lorem ipsum dolor sit amet, consectetur adipiscing elit</li>
+</ul>
+
+<h3>Could be better</h3>
+<ul>
+	<li>Lorem ipsum dolor sit amet, consectetur adipiscing elit</li>
+	<li>Lorem ipsum dolor sit amet, consectetur adipiscing elit</li>
+	<li>Lorem ipsum dolor sit amet, consectetur adipiscing elit</li>
+	<li>Lorem ipsum dolor sit amet, consectetur adipiscing elit</li>
+	<li>Lorem ipsum dolor sit amet, consectetur adipiscing elit</li>
+	<li>Lorem ipsum dolor sit amet, consectetur adipiscing elit</li>
+</ul>
+
+</div>
+<div class="rightBottom">
+<img class="footerGffLogo" src="images/dark-gff.jpg" />
+</div>
+</div><!-- ###END CONTENT 11###-->
+<div class="content" id="slideNum14">
+<div class="left"></div>
+<div class="right">
+<h2><span class="outline1">Scope of Solution</span></h2>
+
+<h3>90 Day Plan of Attack</h3>
+
+<table class="poa">
+	<tr>
+		<th>0 - 30 days</th>
+		<th>30 - 60 days</th>
+		<th>60 - 90 days</th>
+	</tr>
+	<tr>
+		<td>
+			Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce eu mauris elit, ac placerat nulla. Duis et lorem sit amet nunc fermentum placerat. Ut et rhoncus nulla.
+		</td>
+		<td>
+			Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce eu mauris elit, ac placerat nulla. Duis et lorem sit amet nunc fermentum placerat. Ut et rhoncus nulla.
+		</td>
+		<td>
+			Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce eu mauris elit, ac placerat nulla. Duis et lorem sit amet nunc fermentum placerat. Ut et rhoncus nulla.
+		</td>
+	</tr>
+</table>
+
+
+</div>
+<div class="rightBottom">
+<img class="footerGffLogo" src="images/dark-gff.jpg" />
+</div>
+</div><!-- ###END CONTENT 12###-->
+<div class="content" id="slideNum15">
+<div class="left"></div>
+<div class="right">
+<h2><span class="outline1">Proposed Package</span></h2>
+
+<ul>
+	<li>Nam vel dui at neque vehicula ultricies. </li>
+	<li>Nam vel dui at neque vehicula ultricies. </li>
+	<li>Nam vel dui at neque vehicula ultricies. </li>
+	<li>Nam vel dui at neque vehicula ultricies. </li>
+	<li>Nam vel dui at neque vehicula ultricies. </li>
+	<li>Nam vel dui at neque vehicula ultricies. </li>
+	<li>Nam vel dui at neque vehicula ultricies. </li>
+	<li>Nam vel dui at neque vehicula ultricies. </li>
+	<li>Nam vel dui at neque vehicula ultricies. </li>
+</ul>
+
+</div>
+<div class="rightBottom">
+<img class="footerGffLogo" src="images/dark-gff.jpg" />
+</div>
+</div><!-- ###END CONTENT 13###-->
+<div class="content" id="slideNum16">
+<div class="left"></div>
+<div class="right">
+<h2>The End</h2>
+
+
+</div>
+<div class="rightBottom">
+<img class="footerGffLogo" src="images/dark-gff.jpg" />
+</div>
+</div><!-- ###END CONTENT 14###-->
+{if $presentation_mode == on}
+</div><!--overlay-->
+{/if}
+</body>
+</html>
